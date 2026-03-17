@@ -67,7 +67,7 @@ const App = () => {
   };
 
   const callGemini = async (payload) => {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
     const delays = [1000, 2000, 4000, 8000, 16000]; let lastError = null;
     for (let i = 0; i <= delays.length; i++) {
       try {
