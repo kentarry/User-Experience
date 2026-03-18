@@ -5,7 +5,7 @@ const { useState, useEffect } = React;
 const App = () => {
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
-  
+
   const [modalConfig, setModalConfig] = useState({ isOpen: false, title: '', message: '', isError: false });
   const showModal = (message, title = '提示', isError = false) => { setModalConfig({ isOpen: true, title, message, isError }); };
   const closeModal = () => { setModalConfig({ ...modalConfig, isOpen: false }); };
@@ -15,7 +15,7 @@ const App = () => {
     script.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
     script.async = true;
     document.body.appendChild(script);
-    return () => { if(document.body.contains(script)) { document.body.removeChild(script); } }
+    return () => { if (document.body.contains(script)) { document.body.removeChild(script); } }
   }, []);
 
   const [data, setData] = useState(initialData);
@@ -29,7 +29,7 @@ const App = () => {
 
   const handleJsonChange = (e) => {
     const newVal = e.target.value; setJsonInput(newVal);
-    try { setData(JSON.parse(newVal)); } catch (err) {}
+    try { setData(JSON.parse(newVal)); } catch (err) { }
   };
 
   const updateField = (path, value) => {
@@ -66,9 +66,9 @@ const App = () => {
     reader.readAsDataURL(file);
   };
 
- const callGemini = async (payload) => {
-const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-pro-preview:generateContent?key=${apiKey}`;
-   const delays = [1000, 2000, 4000, 8000, 16000]; let lastError = null;
+  const callGemini = async (payload) => {
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const delays = [1000, 2000, 4000, 8000, 16000]; let lastError = null;
     for (let i = 0; i <= delays.length; i++) {
       try {
         const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -142,7 +142,7 @@ const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-
         const textResponse = await callGemini(payload);
         let importedData;
         try { let cleanText = textResponse.trim(); if (cleanText.startsWith("```json")) cleanText = cleanText.substring(7); else if (cleanText.startsWith("```")) cleanText = cleanText.substring(3); if (cleanText.endsWith("```")) cleanText = cleanText.substring(0, cleanText.length - 3); importedData = JSON.parse(cleanText.trim()); } catch (e) { throw new Error("AI 回傳格式錯誤，請重試"); }
-        
+
         const rowMap = new Map(filteredData.map(d => [d._id, d]));
         const processIssues = (issues) => {
           if (!Array.isArray(issues)) return [];
@@ -217,16 +217,16 @@ const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-
             <p className="text-slate-400 text-sm">報告日期: {data.meta.date} | 總測人數: {data.meta.testerCount}人</p>
           </div>
           <div className="text-right">
-             <div className="flex bg-slate-800 rounded p-1 border border-slate-700">
-                <button onClick={() => setPreviewMode('export')} className={`px-3 py-1 text-xs rounded transition-colors flex items-center gap-1 ${previewMode === 'export' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}><Eye size={12}/> 匯出報告預覽</button>
-                <button onClick={() => setPreviewMode('internal')} className={`px-3 py-1 text-xs rounded transition-colors flex items-center gap-1 ${previewMode === 'internal' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}><EyeOff size={12}/> 內部完整資料</button>
-             </div>
+            <div className="flex bg-slate-800 rounded p-1 border border-slate-700">
+              <button onClick={() => setPreviewMode('export')} className={`px-3 py-1 text-xs rounded transition-colors flex items-center gap-1 ${previewMode === 'export' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}><Eye size={12} /> 匯出報告預覽</button>
+              <button onClick={() => setPreviewMode('internal')} className={`px-3 py-1 text-xs rounded transition-colors flex items-center gap-1 ${previewMode === 'internal' ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-400 hover:text-white hover:bg-slate-700'}`}><EyeOff size={12} /> 內部完整資料</button>
+            </div>
           </div>
         </div>
         <div className="mb-8 bg-slate-800 border border-slate-600 rounded-lg overflow-hidden">
           <div className="bg-slate-700 px-4 py-2 border-b border-slate-600 flex justify-between items-center">
-             <h3 className="font-bold text-white flex items-center gap-2"><FileText size={16} /> 使用者體驗 - 總結</h3>
-             <span className="bg-red-500/20 text-red-300 text-xs px-2 py-0.5 rounded border border-red-500/30">Impact: {data.summary.impactLevel}</span>
+            <h3 className="font-bold text-white flex items-center gap-2"><FileText size={16} /> 使用者體驗 - 總結</h3>
+            <span className="bg-red-500/20 text-red-300 text-xs px-2 py-0.5 rounded border border-red-500/30">Impact: {data.summary.impactLevel}</span>
           </div>
           <div className="p-5 text-slate-200 leading-relaxed text-lg whitespace-pre-wrap">{data.summary.content}</div>
         </div>
@@ -235,26 +235,26 @@ const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-
           <h3 className="text-xl font-bold text-green-400 mb-3 border-l-4 border-green-500 pl-3">使用者體驗回饋 (重要)</h3>
           <div className="overflow-hidden rounded-lg border border-slate-600">
             {data.criticalIssues.length > 0 ? (
-            <table className="w-full text-sm text-left"><thead className="text-xs uppercase bg-slate-700 text-slate-200"><tr><th className="px-4 py-3 w-16 text-center border-r border-slate-600">編號</th><th className="px-4 py-3 border-r border-slate-600">使用者體驗 (Issue)</th><th className="px-4 py-3 w-16 text-center border-r border-slate-600">人數</th><th className="px-4 py-3 w-16 text-center border-r border-slate-600">編號</th><th className="px-4 py-3">組員優化建議 (Suggestion)</th></tr></thead>
-              <tbody className="divide-y divide-slate-600 bg-slate-800">
-                {data.criticalIssues.map((item, idx) => (
-                  <tr key={idx} className="hover:bg-slate-750">
-                    <td className="px-4 py-3 text-center text-green-400 font-mono border-r border-slate-600">{item.id}</td>
-                    <td className="px-4 py-3 text-slate-200 border-r border-slate-600 leading-relaxed whitespace-pre-wrap">
+              <table className="w-full text-sm text-left"><thead className="text-xs uppercase bg-slate-700 text-slate-200"><tr><th className="px-4 py-3 w-16 text-center border-r border-slate-600">編號</th><th className="px-4 py-3 border-r border-slate-600">使用者體驗 (Issue)</th><th className="px-4 py-3 w-16 text-center border-r border-slate-600">人數</th><th className="px-4 py-3 w-16 text-center border-r border-slate-600">編號</th><th className="px-4 py-3">組員優化建議 (Suggestion)</th></tr></thead>
+                <tbody className="divide-y divide-slate-600 bg-slate-800">
+                  {data.criticalIssues.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-slate-750">
+                      <td className="px-4 py-3 text-center text-green-400 font-mono border-r border-slate-600">{item.id}</td>
+                      <td className="px-4 py-3 text-slate-200 border-r border-slate-600 leading-relaxed whitespace-pre-wrap">
                         <div className="mb-2">{item.issue}</div>
                         {previewMode === 'internal' && Array.isArray(item.relatedPersonnel) && item.relatedPersonnel.length > 0 && (
-                            <div className="mt-2"><span className="text-[10px] text-blue-300 mr-2 block mb-1">相關人員:</span><div className="flex flex-wrap gap-1">{item.relatedPersonnel.map((person, pIdx) => (<span key={pIdx} className="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-900/50 text-blue-200 border border-blue-800">{person}</span>))}</div></div>
+                          <div className="mt-2"><span className="text-[10px] text-blue-300 mr-2 block mb-1">相關人員:</span><div className="flex flex-wrap gap-1">{item.relatedPersonnel.map((person, pIdx) => (<span key={pIdx} className="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-900/50 text-blue-200 border border-blue-800">{person}</span>))}</div></div>
                         )}
-                    </td>
-                    <td className="px-4 py-3 text-center font-bold text-white border-r border-slate-600">{item.count}</td>
-                    <td className="px-4 py-3 text-center text-purple-400 font-mono border-r border-slate-600">{item.suggestionId}</td>
-                    <td className="px-4 py-3 text-slate-300 leading-relaxed whitespace-pre-wrap">
+                      </td>
+                      <td className="px-4 py-3 text-center font-bold text-white border-r border-slate-600">{item.count}</td>
+                      <td className="px-4 py-3 text-center text-purple-400 font-mono border-r border-slate-600">{item.suggestionId}</td>
+                      <td className="px-4 py-3 text-slate-300 leading-relaxed whitespace-pre-wrap">
                         <div className="mb-2">{item.suggestion}</div>
                         {previewMode === 'internal' && item.bestSuggestionRawText && (<div className="bg-slate-900/30 p-2 rounded border border-slate-700/50 text-xs italic text-slate-400 mb-2 whitespace-pre-wrap"><span className="block text-[10px] text-slate-500 not-italic mb-1">原始建議:</span>"{item.bestSuggestionRawText}"</div>)}
                         {previewMode === 'internal' && (item.bestSuggester && item.bestSuggester.name) && (<div className="text-xs flex items-center gap-1 text-orange-400"><span>🏆 最佳建議者: {item.bestSuggester.name}</span><span className="text-orange-400/60">({item.bestSuggester.account || 'No ID'})</span></div>)}
-                    </td>
-                  </tr>))}
-              </tbody></table>
+                      </td>
+                    </tr>))}
+                </tbody></table>
             ) : <div className="p-4 text-center text-slate-500 italic">尚無資料，請匯入 Excel</div>}
           </div>
         </div>
@@ -262,60 +262,60 @@ const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-
         <div className="mb-10">
           <h3 className="text-xl font-bold text-blue-400 mb-3 border-l-4 border-blue-500 pl-3">使用者體驗回饋 (次要)</h3>
           <div className="overflow-hidden rounded-lg border border-slate-600">
-             {data.secondaryIssues.length > 0 ? (
-            <table className="w-full text-sm text-left"><thead className="text-xs uppercase bg-slate-700 text-slate-200"><tr><th className="px-4 py-3 w-16 text-center border-r border-slate-600">編號</th><th className="px-4 py-3 border-r border-slate-600">使用者體驗 (Issue)</th><th className="px-4 py-3 w-16 text-center border-r border-slate-600">人數</th><th className="px-4 py-3 w-16 text-center border-r border-slate-600">編號</th><th className="px-4 py-3">組員優化建議 (Suggestion)</th></tr></thead>
-              <tbody className="divide-y divide-slate-600 bg-slate-800">
-                {data.secondaryIssues.map((item, idx) => (
-                  <tr key={idx} className="hover:bg-slate-750">
-                    <td className="px-4 py-3 text-center text-blue-400 font-mono border-r border-slate-600">{item.id}</td>
-                    <td className="px-4 py-3 text-slate-200 border-r border-slate-600 leading-relaxed whitespace-pre-wrap">
+            {data.secondaryIssues.length > 0 ? (
+              <table className="w-full text-sm text-left"><thead className="text-xs uppercase bg-slate-700 text-slate-200"><tr><th className="px-4 py-3 w-16 text-center border-r border-slate-600">編號</th><th className="px-4 py-3 border-r border-slate-600">使用者體驗 (Issue)</th><th className="px-4 py-3 w-16 text-center border-r border-slate-600">人數</th><th className="px-4 py-3 w-16 text-center border-r border-slate-600">編號</th><th className="px-4 py-3">組員優化建議 (Suggestion)</th></tr></thead>
+                <tbody className="divide-y divide-slate-600 bg-slate-800">
+                  {data.secondaryIssues.map((item, idx) => (
+                    <tr key={idx} className="hover:bg-slate-750">
+                      <td className="px-4 py-3 text-center text-blue-400 font-mono border-r border-slate-600">{item.id}</td>
+                      <td className="px-4 py-3 text-slate-200 border-r border-slate-600 leading-relaxed whitespace-pre-wrap">
                         <div className="mb-2">{item.issue}</div>
                         {previewMode === 'internal' && Array.isArray(item.relatedPersonnel) && item.relatedPersonnel.length > 0 && (
-                            <div className="mt-2"><span className="text-[10px] text-blue-300 mr-2 block mb-1">相關人員:</span><div className="flex flex-wrap gap-1">{item.relatedPersonnel.map((person, pIdx) => (<span key={pIdx} className="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-900/50 text-blue-200 border border-blue-800">{person}</span>))}</div></div>
+                          <div className="mt-2"><span className="text-[10px] text-blue-300 mr-2 block mb-1">相關人員:</span><div className="flex flex-wrap gap-1">{item.relatedPersonnel.map((person, pIdx) => (<span key={pIdx} className="px-2 py-0.5 rounded text-[10px] font-medium bg-blue-900/50 text-blue-200 border border-blue-800">{person}</span>))}</div></div>
                         )}
-                    </td>
-                    <td className="px-4 py-3 text-center font-bold text-white border-r border-slate-600">{item.count}</td>
-                    <td className="px-4 py-3 text-center text-purple-400 font-mono border-r border-slate-600">{item.suggestionId}</td>
-                    <td className="px-4 py-3 text-slate-300 leading-relaxed whitespace-pre-wrap">
+                      </td>
+                      <td className="px-4 py-3 text-center font-bold text-white border-r border-slate-600">{item.count}</td>
+                      <td className="px-4 py-3 text-center text-purple-400 font-mono border-r border-slate-600">{item.suggestionId}</td>
+                      <td className="px-4 py-3 text-slate-300 leading-relaxed whitespace-pre-wrap">
                         <div className="mb-2">{item.suggestion}</div>
                         {previewMode === 'internal' && item.bestSuggestionRawText && (<div className="bg-slate-900/30 p-2 rounded border border-slate-700/50 text-xs italic text-slate-400 mb-2 whitespace-pre-wrap"><span className="block text-[10px] text-slate-500 not-italic mb-1">原始建議:</span>"{item.bestSuggestionRawText}"</div>)}
                         {previewMode === 'internal' && (item.bestSuggester && item.bestSuggester.name) && (<div className="text-xs flex items-center gap-1 text-orange-400"><span>🏆 最佳建議者: {item.bestSuggester.name}</span><span className="text-orange-400/60">({item.bestSuggester.account || 'No ID'})</span></div>)}
-                    </td>
-                  </tr>))}
-              </tbody></table>
-             ) : <div className="p-4 text-center text-slate-500 italic">尚無資料，請匯入 Excel</div>}
+                      </td>
+                    </tr>))}
+                </tbody></table>
+            ) : <div className="p-4 text-center text-slate-500 italic">尚無資料，請匯入 Excel</div>}
           </div>
         </div>
         {/* AI Image Analysis */}
         <div className="mb-8">
-          <div className="bg-orange-900/30 border border-orange-500/50 rounded-t-lg px-4 py-2 flex items-center gap-2"><AlertTriangle size={18} className="text-orange-400"/><h3 className="text-lg font-bold text-orange-100">AI - UI/UX 圖像判讀與建議</h3></div>
+          <div className="bg-orange-900/30 border border-orange-500/50 rounded-t-lg px-4 py-2 flex items-center gap-2"><AlertTriangle size={18} className="text-orange-400" /><h3 className="text-lg font-bold text-orange-100">AI - UI/UX 圖像判讀與建議</h3></div>
           <div className="border-x border-b border-orange-500/30 bg-slate-800/50 p-6 rounded-b-lg space-y-8">
-             {data.aiAnalysis.length > 0 ? data.aiAnalysis.map((item, idx) => (
-               <div key={idx} className="flex gap-6 border-b border-slate-700 pb-6 last:border-0 last:pb-0">
-                  <div className="w-1/2 flex flex-col gap-2">
-                    <span className="text-xs text-slate-400">AI 辨識用圖片</span>
-                    <div className="rounded-lg overflow-hidden border border-slate-600 relative group bg-black/40 min-h-[150px] flex items-center justify-center">
-                      {item.imageUrl ? (<img src={item.imageUrl} alt="Analysis" className="w-full object-cover" />) : (<div className="text-slate-500 text-xs flex flex-col items-center"><ImageIcon size={24} className="mb-2 opacity-50"/>尚無圖片</div>)}
+            {data.aiAnalysis.length > 0 ? data.aiAnalysis.map((item, idx) => (
+              <div key={idx} className="flex gap-6 border-b border-slate-700 pb-6 last:border-0 last:pb-0">
+                <div className="w-1/2 flex flex-col gap-2">
+                  <span className="text-xs text-slate-400">AI 辨識用圖片</span>
+                  <div className="rounded-lg overflow-hidden border border-slate-600 relative group bg-black/40 min-h-[150px] flex items-center justify-center">
+                    {item.imageUrl ? (<img src={item.imageUrl} alt="Analysis" className="w-full object-cover" />) : (<div className="text-slate-500 text-xs flex flex-col items-center"><ImageIcon size={24} className="mb-2 opacity-50" />尚無圖片</div>)}
+                  </div>
+                </div>
+                <div className="w-1/2 flex flex-col justify-center">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded text-xs border border-orange-500/30 font-mono">{item.id}</span>
+                    <span className="text-orange-400 font-bold text-sm">AI 觀察與建議</span>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="bg-slate-900/50 p-3 rounded border border-slate-700/50">
+                      <p className="text-slate-400 text-xs mb-2 font-bold">觀察 (Observation)</p>
+                      {Array.isArray(item.observation) && item.observation.length > 0 ? (<ul className="list-disc list-outside ml-4 space-y-1">{item.observation.map((point, i) => (<li key={i} className="text-slate-200 text-sm leading-relaxed pl-1 marker:text-slate-500">{point}</li>))}</ul>) : <p className="text-slate-500 text-sm">等待分析...</p>}
+                    </div>
+                    <div className="bg-slate-900/50 p-3 rounded border border-purple-500/30">
+                      <p className="text-purple-400 text-xs mb-2 font-bold">建議 (Suggestion)</p>
+                      {Array.isArray(item.suggestion) && item.suggestion.length > 0 ? (<ul className="list-disc list-outside ml-4 space-y-1">{item.suggestion.map((point, i) => (<li key={i} className="text-slate-200 text-sm leading-relaxed pl-1 marker:text-purple-500">{point}</li>))}</ul>) : <p className="text-slate-500 text-sm">等待分析...</p>}
                     </div>
                   </div>
-                  <div className="w-1/2 flex flex-col justify-center">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="bg-orange-500/20 text-orange-300 px-2 py-0.5 rounded text-xs border border-orange-500/30 font-mono">{item.id}</span>
-                      <span className="text-orange-400 font-bold text-sm">AI 觀察與建議</span>
-                    </div>
-                    <div className="space-y-3">
-                        <div className="bg-slate-900/50 p-3 rounded border border-slate-700/50">
-                          <p className="text-slate-400 text-xs mb-2 font-bold">觀察 (Observation)</p>
-                          {Array.isArray(item.observation) && item.observation.length > 0 ? (<ul className="list-disc list-outside ml-4 space-y-1">{item.observation.map((point, i) => (<li key={i} className="text-slate-200 text-sm leading-relaxed pl-1 marker:text-slate-500">{point}</li>))}</ul>) : <p className="text-slate-500 text-sm">等待分析...</p>}
-                        </div>
-                        <div className="bg-slate-900/50 p-3 rounded border border-purple-500/30">
-                          <p className="text-purple-400 text-xs mb-2 font-bold">建議 (Suggestion)</p>
-                          {Array.isArray(item.suggestion) && item.suggestion.length > 0 ? (<ul className="list-disc list-outside ml-4 space-y-1">{item.suggestion.map((point, i) => (<li key={i} className="text-slate-200 text-sm leading-relaxed pl-1 marker:text-purple-500">{point}</li>))}</ul>) : <p className="text-slate-500 text-sm">等待分析...</p>}
-                        </div>
-                    </div>
-                  </div>
-               </div>
-             )) : <div className="text-center text-slate-500 text-sm">尚無圖像分析，請從右側新增。</div>}
+                </div>
+              </div>
+            )) : <div className="text-center text-slate-500 text-sm">尚無圖像分析，請從右側新增。</div>}
           </div>
         </div>
       </div>
@@ -326,9 +326,9 @@ const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-
           <div className="flex justify-between items-center mb-3">
             <h2 className="text-lg font-bold text-white flex items-center gap-2"><Settings size={18} className="animate-spin-slow" /> 報告編輯器</h2>
             <div className="flex gap-1 bg-slate-800 rounded p-1">
-               <button onClick={() => setActiveTab('editor')} className={`px-3 py-1 text-xs rounded transition-colors ${activeTab === 'editor' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>GUI</button>
-               <button onClick={() => setActiveTab('prompts')} className={`px-3 py-1 text-xs rounded transition-colors ${activeTab === 'prompts' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>Prompts</button>
-               <button onClick={() => setActiveTab('json')} className={`px-3 py-1 text-xs rounded transition-colors ${activeTab === 'json' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>JSON</button>
+              <button onClick={() => setActiveTab('editor')} className={`px-3 py-1 text-xs rounded transition-colors ${activeTab === 'editor' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>GUI</button>
+              <button onClick={() => setActiveTab('prompts')} className={`px-3 py-1 text-xs rounded transition-colors ${activeTab === 'prompts' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>Prompts</button>
+              <button onClick={() => setActiveTab('json')} className={`px-3 py-1 text-xs rounded transition-colors ${activeTab === 'json' ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white'}`}>JSON</button>
             </div>
           </div>
           <div className="bg-slate-800 border border-slate-700 rounded-lg p-3">
@@ -346,7 +346,7 @@ const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-
                   onChange={(e) => setApiKey(e.target.value)}
                 />
                 <button onClick={() => setShowApiKey(!showApiKey)} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
-                  {showApiKey ? <EyeOff size={14}/> : <Eye size={14}/>}
+                  {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
             </div>
@@ -356,10 +356,10 @@ const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-
         <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
           {activeTab === 'editor' && (<EditorTab data={data} previewMode={previewMode} isImporting={isImporting} analyzingIds={analyzingIds} updateField={updateField} addItem={addItem} removeItem={removeItem} updateListItem={updateListItem} handleFileUpload={handleFileUpload} handleHtmlImport={handleHtmlImport} handleImageUpload={handleImageUpload} analyzeImage={analyzeImage} />)}
           {activeTab === 'prompts' && (<PromptsTab uxExpertPrompt={uxExpertPrompt} setUxExpertPrompt={setUxExpertPrompt} dataImportPrompt={dataImportPrompt} setDataImportPrompt={setDataImportPrompt} />)}
-          {activeTab === 'json' && (<div className="h-full flex flex-col"><p className="text-xs text-slate-400 mb-2">完整 Raw Data JSON：</p><textarea className="flex-1 w-full bg-slate-950 font-mono text-xs text-green-400 p-4 rounded border border-slate-700 outline-none resize-none" value={jsonInput} onChange={handleJsonChange} spellCheck="false"/></div>)}
+          {activeTab === 'json' && (<div className="h-full flex flex-col"><p className="text-xs text-slate-400 mb-2">完整 Raw Data JSON：</p><textarea className="flex-1 w-full bg-slate-950 font-mono text-xs text-green-400 p-4 rounded border border-slate-700 outline-none resize-none" value={jsonInput} onChange={handleJsonChange} spellCheck="false" /></div>)}
         </div>
         <div className="p-4 border-t border-slate-700 bg-slate-900">
-           <button onClick={handleExportHtml} className="w-full py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded flex items-center justify-center gap-2 transition-all shadow-lg shadow-green-900/20"><Download size={18} /> 匯出 HTML 報告</button>
+          <button onClick={handleExportHtml} className="w-full py-3 bg-green-600 hover:bg-green-500 text-white font-bold rounded flex items-center justify-center gap-2 transition-all shadow-lg shadow-green-900/20"><Download size={18} /> 匯出 HTML 報告</button>
         </div>
       </div>
       {isLoading && (<div className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center cursor-not-allowed"><Loader2 size={48} className="text-blue-400 animate-spin mb-4" /><p className="text-white text-lg font-bold tracking-wider">資料處理中...</p></div>)}
@@ -372,47 +372,47 @@ const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-
 const EditorTab = ({ data, isImporting, analyzingIds, updateField, addItem, removeItem, updateListItem, handleFileUpload, handleHtmlImport, handleImageUpload, analyzeImage }) => (
   <>
     <div className="mb-4 bg-slate-700/30 border border-slate-600 rounded-lg p-3">
-       <h4 className="text-slate-300 text-xs font-bold mb-2 flex items-center gap-2"><FolderInput size={14}/> 匯入舊版 HTML 報告</h4>
-       <label className="flex-1 cursor-pointer bg-slate-800 border border-slate-600 rounded py-2 px-3 hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 text-xs text-slate-300"><Code size={14}/><span>選擇 HTML 檔案還原</span><input type="file" accept=".html" className="hidden" onChange={handleHtmlImport} /></label>
+      <h4 className="text-slate-300 text-xs font-bold mb-2 flex items-center gap-2"><FolderInput size={14} /> 匯入舊版 HTML 報告</h4>
+      <label className="flex-1 cursor-pointer bg-slate-800 border border-slate-600 rounded py-2 px-3 hover:bg-slate-700 transition-colors flex items-center justify-center gap-2 text-xs text-slate-300"><Code size={14} /><span>選擇 HTML 檔案還原</span><input type="file" accept=".html" className="hidden" onChange={handleHtmlImport} /></label>
     </div>
     <div className="mb-6 bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
-       <h4 className="text-blue-400 text-sm font-bold mb-2 flex items-center gap-2"><FileSpreadsheet size={16}/> 匯入 Excel 原始資料</h4>
-       <p className="text-xs text-slate-400 mb-3 leading-relaxed">上傳使用者體驗回饋的 Excel (.xlsx)，AI 將自動清洗空洞回饋、整併相似問題、統計頻率並歸納重點。</p>
-       <label className={`flex items-center justify-center gap-2 w-full py-3 rounded border border-dashed cursor-pointer transition-all ${isImporting ? 'bg-slate-800 border-slate-600 text-slate-500' : 'bg-blue-600/10 border-blue-500/50 text-blue-300 hover:bg-blue-600/20'}`}>
-          {isImporting ? <Loader2 size={18} className="animate-spin"/> : <Upload size={18}/>}
-          <span className="text-xs font-bold">{isImporting ? "AI 正在分析資料..." : "點擊上傳 Excel 檔"}</span>
-          <input type="file" accept=".xlsx, .xls, .csv" className="hidden" onChange={handleFileUpload} disabled={isImporting} />
-       </label>
+      <h4 className="text-blue-400 text-sm font-bold mb-2 flex items-center gap-2"><FileSpreadsheet size={16} /> 匯入 Excel 原始資料</h4>
+      <p className="text-xs text-slate-400 mb-3 leading-relaxed">上傳使用者體驗回饋的 Excel (.xlsx)，AI 將自動清洗空洞回饋、整併相似問題、統計頻率並歸納重點。</p>
+      <label className={`flex items-center justify-center gap-2 w-full py-3 rounded border border-dashed cursor-pointer transition-all ${isImporting ? 'bg-slate-800 border-slate-600 text-slate-500' : 'bg-blue-600/10 border-blue-500/50 text-blue-300 hover:bg-blue-600/20'}`}>
+        {isImporting ? <Loader2 size={18} className="animate-spin" /> : <Upload size={18} />}
+        <span className="text-xs font-bold">{isImporting ? "AI 正在分析資料..." : "點擊上傳 Excel 檔"}</span>
+        <input type="file" accept=".xlsx, .xls, .csv" className="hidden" onChange={handleFileUpload} disabled={isImporting} />
+      </label>
     </div>
     <div className="space-y-6">
       <Section title="1. 報告基礎資訊">
-         <InputGroup label="報告標題" value={data.meta.title} onChange={(e) => updateField('meta.title', e.target.value)} />
-         <div className="grid grid-cols-2 gap-2"><InputGroup label="日期" type="date" value={data.meta.date} onChange={(e) => updateField('meta.date', e.target.value)} /><InputGroup label="測試總人數" type="number" value={data.meta.testerCount} onChange={(e) => updateField('meta.testerCount', parseInt(e.target.value))} /></div>
+        <InputGroup label="報告標題" value={data.meta.title} onChange={(e) => updateField('meta.title', e.target.value)} />
+        <div className="grid grid-cols-2 gap-2"><InputGroup label="日期" type="date" value={data.meta.date} onChange={(e) => updateField('meta.date', e.target.value)} /><InputGroup label="測試總人數" type="number" value={data.meta.testerCount} onChange={(e) => updateField('meta.testerCount', parseInt(e.target.value))} /></div>
       </Section>
       <Section title="2. 體驗總結 (Summary)">
         <textarea className="w-full bg-slate-900 border border-slate-600 rounded p-2 text-sm text-white focus:border-blue-500 outline-none h-32 leading-relaxed" value={data.summary.content} onChange={(e) => updateField('summary.content', e.target.value)} />
       </Section>
       <Section title="3. 重要問題 (Critical)">
-         {data.criticalIssues.map((item, idx) => <IssueEditor key={idx} listName="criticalIssues" item={item} idx={idx} colorClass="text-green-400" removeItem={removeItem} updateListItem={updateListItem} />)}
-         <button onClick={() => addItem('criticalIssues')} className="w-full py-2 border border-dashed border-slate-600 rounded text-slate-400 hover:text-white hover:border-slate-400 text-xs flex items-center justify-center gap-1"><Plus size={14}/> 新增重要問題</button>
+        {data.criticalIssues.map((item, idx) => <IssueEditor key={idx} listName="criticalIssues" item={item} idx={idx} colorClass="text-green-400" removeItem={removeItem} updateListItem={updateListItem} />)}
+        <button onClick={() => addItem('criticalIssues')} className="w-full py-2 border border-dashed border-slate-600 rounded text-slate-400 hover:text-white hover:border-slate-400 text-xs flex items-center justify-center gap-1"><Plus size={14} /> 新增重要問題</button>
       </Section>
       <Section title="4. 次要問題 (Secondary)">
-         {data.secondaryIssues.map((item, idx) => <IssueEditor key={idx} listName="secondaryIssues" item={item} idx={idx} colorClass="text-blue-400" removeItem={removeItem} updateListItem={updateListItem} />)}
-         <button onClick={() => addItem('secondaryIssues')} className="w-full py-2 border border-dashed border-slate-600 rounded text-slate-400 hover:text-white hover:border-slate-400 text-xs flex items-center justify-center gap-1"><Plus size={14}/> 新增次要問題</button>
+        {data.secondaryIssues.map((item, idx) => <IssueEditor key={idx} listName="secondaryIssues" item={item} idx={idx} colorClass="text-blue-400" removeItem={removeItem} updateListItem={updateListItem} />)}
+        <button onClick={() => addItem('secondaryIssues')} className="w-full py-2 border border-dashed border-slate-600 rounded text-slate-400 hover:text-white hover:border-slate-400 text-xs flex items-center justify-center gap-1"><Plus size={14} /> 新增次要問題</button>
       </Section>
       <Section title="5. AI 圖像分析 (Smart Analysis)">
-         {data.aiAnalysis.map((item, idx) => (
-           <div key={idx} className="mb-4 bg-slate-900/50 p-3 rounded border border-slate-700 relative group">
-              <button onClick={() => removeItem('aiAnalysis', idx)} className="absolute top-2 right-2 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity z-10"><Trash2 size={14}/></button>
-              <div className="mb-3"><label className="text-xs text-slate-500 mb-1 block">1. 上傳遊戲截圖</label><div className="flex gap-2 items-center">
-                <label className="flex-1 cursor-pointer bg-slate-800 border border-slate-600 border-dashed rounded h-16 flex flex-col items-center justify-center hover:bg-slate-700 transition-colors relative overflow-hidden">{item.imageUrl ? (<img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50" alt="Preview"/>) : null}<div className="relative z-10 flex flex-col items-center"><Upload size={16} className="text-slate-400"/><span className="text-[10px] text-slate-400 mt-1">點擊上傳</span></div><input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(idx, e)} /></label>
-                <button onClick={() => analyzeImage(idx, item.imageUrl)} disabled={analyzingIds[idx] || !item.imageUrl} className={`h-16 w-16 rounded flex flex-col items-center justify-center gap-1 text-[10px] font-bold border transition-all ${analyzingIds[idx] ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed' : !item.imageUrl ? 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed' : 'bg-orange-600 hover:bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-900/20'}`}>{analyzingIds[idx] ? <Loader2 size={18} className="animate-spin"/> : <Sparkles size={18}/>}{analyzingIds[idx] ? '分析中' : 'AI 分析'}</button>
-              </div></div>
-              <div className="mt-2"><label className="text-xs text-slate-500 mb-1 block">AI 觀察 (每行一點)</label><textarea className="w-full bg-slate-800 border border-slate-600 rounded p-2 text-xs text-slate-300 mb-2 h-20" value={Array.isArray(item.observation) ? item.observation.join('\n') : item.observation} onChange={(e) => updateListItem('aiAnalysis', idx, 'observation', e.target.value.split('\n'))} placeholder="等待 AI 分析..."/></div>
-              <div className="mt-1"><label className="text-xs text-purple-400/70 mb-1 block">UIUX 建議 (每行一點)</label><textarea className="w-full bg-slate-800 border border-slate-600 rounded p-2 text-xs text-purple-300 h-24" value={Array.isArray(item.suggestion) ? item.suggestion.join('\n') : item.suggestion} onChange={(e) => updateListItem('aiAnalysis', idx, 'suggestion', e.target.value.split('\n'))} placeholder="等待 AI 分析..."/></div>
-           </div>
-         ))}
-         <button onClick={() => addItem('aiAnalysis')} className="w-full py-2 border border-dashed border-orange-500/50 rounded text-orange-400 hover:text-orange-200 hover:border-orange-400 text-xs flex items-center justify-center gap-1"><Plus size={14}/> 新增圖片分析</button>
+        {data.aiAnalysis.map((item, idx) => (
+          <div key={idx} className="mb-4 bg-slate-900/50 p-3 rounded border border-slate-700 relative group">
+            <button onClick={() => removeItem('aiAnalysis', idx)} className="absolute top-2 right-2 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity z-10"><Trash2 size={14} /></button>
+            <div className="mb-3"><label className="text-xs text-slate-500 mb-1 block">1. 上傳遊戲截圖</label><div className="flex gap-2 items-center">
+              <label className="flex-1 cursor-pointer bg-slate-800 border border-slate-600 border-dashed rounded h-16 flex flex-col items-center justify-center hover:bg-slate-700 transition-colors relative overflow-hidden">{item.imageUrl ? (<img src={item.imageUrl} className="absolute inset-0 w-full h-full object-cover opacity-50" alt="Preview" />) : null}<div className="relative z-10 flex flex-col items-center"><Upload size={16} className="text-slate-400" /><span className="text-[10px] text-slate-400 mt-1">點擊上傳</span></div><input type="file" accept="image/*" className="hidden" onChange={(e) => handleImageUpload(idx, e)} /></label>
+              <button onClick={() => analyzeImage(idx, item.imageUrl)} disabled={analyzingIds[idx] || !item.imageUrl} className={`h-16 w-16 rounded flex flex-col items-center justify-center gap-1 text-[10px] font-bold border transition-all ${analyzingIds[idx] ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed' : !item.imageUrl ? 'bg-slate-800 text-slate-600 border-slate-700 cursor-not-allowed' : 'bg-orange-600 hover:bg-orange-500 text-white border-orange-500 shadow-lg shadow-orange-900/20'}`}>{analyzingIds[idx] ? <Loader2 size={18} className="animate-spin" /> : <Sparkles size={18} />}{analyzingIds[idx] ? '分析中' : 'AI 分析'}</button>
+            </div></div>
+            <div className="mt-2"><label className="text-xs text-slate-500 mb-1 block">AI 觀察 (每行一點)</label><textarea className="w-full bg-slate-800 border border-slate-600 rounded p-2 text-xs text-slate-300 mb-2 h-20" value={Array.isArray(item.observation) ? item.observation.join('\n') : item.observation} onChange={(e) => updateListItem('aiAnalysis', idx, 'observation', e.target.value.split('\n'))} placeholder="等待 AI 分析..." /></div>
+            <div className="mt-1"><label className="text-xs text-purple-400/70 mb-1 block">UIUX 建議 (每行一點)</label><textarea className="w-full bg-slate-800 border border-slate-600 rounded p-2 text-xs text-purple-300 h-24" value={Array.isArray(item.suggestion) ? item.suggestion.join('\n') : item.suggestion} onChange={(e) => updateListItem('aiAnalysis', idx, 'suggestion', e.target.value.split('\n'))} placeholder="等待 AI 分析..." /></div>
+          </div>
+        ))}
+        <button onClick={() => addItem('aiAnalysis')} className="w-full py-2 border border-dashed border-orange-500/50 rounded text-orange-400 hover:text-orange-200 hover:border-orange-400 text-xs flex items-center justify-center gap-1"><Plus size={14} /> 新增圖片分析</button>
       </Section>
     </div>
   </>
@@ -420,18 +420,18 @@ const EditorTab = ({ data, isImporting, analyzingIds, updateField, addItem, remo
 
 const IssueEditor = ({ listName, item, idx, colorClass, removeItem, updateListItem }) => (
   <div className="mb-4 bg-slate-900/50 p-3 rounded border border-slate-700 relative group">
-    <button onClick={() => removeItem(listName, idx)} className="absolute top-2 right-2 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14}/></button>
+    <button onClick={() => removeItem(listName, idx)} className="absolute top-2 right-2 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14} /></button>
     <div className="flex gap-2 mb-2">
       <input className={`w-16 bg-slate-800 border border-slate-600 rounded px-2 text-xs ${colorClass}`} value={item.id} onChange={(e) => updateListItem(listName, idx, 'id', e.target.value)} />
       <input className="w-16 bg-slate-800 border border-slate-600 rounded px-2 text-xs text-white text-center" type="number" value={item.count} onChange={(e) => updateListItem(listName, idx, 'count', parseInt(e.target.value))} title="人數" />
     </div>
     <textarea className="w-full bg-slate-800 border border-slate-600 rounded p-2 text-xs text-slate-300 mb-2 h-16" placeholder="問題描述..." value={item.issue} onChange={(e) => updateListItem(listName, idx, 'issue', e.target.value)} />
-    <div className="mb-2"><label className="text-[10px] text-blue-300 block mb-1">相關人員 (陣列, 以逗號分隔)</label><textarea className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-blue-200" placeholder="UserA, UserB..." value={Array.isArray(item.relatedPersonnel) ? item.relatedPersonnel.join(', ') : ""} onChange={(e) => updateListItem(listName, idx, 'relatedPersonnel', e.target.value.split(',').map(s=>s.trim()))}/></div>
+    <div className="mb-2"><label className="text-[10px] text-blue-300 block mb-1">相關人員 (陣列, 以逗號分隔)</label><textarea className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-blue-200" placeholder="UserA, UserB..." value={Array.isArray(item.relatedPersonnel) ? item.relatedPersonnel.join(', ') : ""} onChange={(e) => updateListItem(listName, idx, 'relatedPersonnel', e.target.value.split(',').map(s => s.trim()))} /></div>
     <textarea className="w-full bg-slate-800 border border-slate-600/50 rounded p-2 text-xs text-purple-300 h-16 mb-2" placeholder="優化建議..." value={item.suggestion} onChange={(e) => updateListItem(listName, idx, 'suggestion', e.target.value)} />
     <div className="bg-slate-800 border border-slate-700 rounded p-2">
-        <div className="text-[10px] text-orange-400 mb-1 flex items-center gap-1 font-bold"><Trophy size={10}/> 最佳建議提供者</div>
-        <div className="flex gap-2 mb-2"><input className="w-1/2 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-slate-300" placeholder="姓名" value={item.bestSuggester?.name || ""} onChange={(e) => updateListItem(listName, idx, 'bestSuggester', { ...item.bestSuggester, name: e.target.value })}/><input className="w-1/2 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-slate-400" placeholder="帳號" value={item.bestSuggester?.account || ""} onChange={(e) => updateListItem(listName, idx, 'bestSuggester', { ...item.bestSuggester, account: e.target.value })}/></div>
-        <textarea className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-slate-400 italic" placeholder="原始回饋內容 (Raw Content)..." value={item.bestSuggestionRawText || ""} onChange={(e) => updateListItem(listName, idx, 'bestSuggestionRawText', e.target.value)}/>
+      <div className="text-[10px] text-orange-400 mb-1 flex items-center gap-1 font-bold"><Trophy size={10} /> 最佳建議提供者</div>
+      <div className="flex gap-2 mb-2"><input className="w-1/2 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-slate-300" placeholder="姓名" value={item.bestSuggester?.name || ""} onChange={(e) => updateListItem(listName, idx, 'bestSuggester', { ...item.bestSuggester, name: e.target.value })} /><input className="w-1/2 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-slate-400" placeholder="帳號" value={item.bestSuggester?.account || ""} onChange={(e) => updateListItem(listName, idx, 'bestSuggester', { ...item.bestSuggester, account: e.target.value })} /></div>
+      <textarea className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-slate-400 italic" placeholder="原始回饋內容 (Raw Content)..." value={item.bestSuggestionRawText || ""} onChange={(e) => updateListItem(listName, idx, 'bestSuggestionRawText', e.target.value)} />
     </div>
   </div>
 );
@@ -441,18 +441,18 @@ const PromptsTab = ({ uxExpertPrompt, setUxExpertPrompt, dataImportPrompt, setDa
     <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 flex-1 flex flex-col">
       <h4 className="text-sm font-bold text-orange-400 mb-2 flex items-center gap-2"><ImageIcon size={16} /> AI 圖像分析指令 (Image Prompt)</h4>
       <p className="text-xs text-slate-400 mb-2">這是點擊「AI 分析」按鈕時，發送給 AI 的指令。您可以根據專案需求微調分析邏輯。</p>
-      <textarea className="flex-1 w-full bg-slate-900 border border-slate-600 rounded p-3 text-xs text-slate-300 font-mono leading-relaxed outline-none focus:border-orange-500 resize-none" value={uxExpertPrompt} onChange={(e) => setUxExpertPrompt(e.target.value)} spellCheck="false"/>
+      <textarea className="flex-1 w-full bg-slate-900 border border-slate-600 rounded p-3 text-xs text-slate-300 font-mono leading-relaxed outline-none focus:border-orange-500 resize-none" value={uxExpertPrompt} onChange={(e) => setUxExpertPrompt(e.target.value)} spellCheck="false" />
     </div>
     <div className="bg-slate-800/50 p-4 rounded-lg border border-slate-700 flex-1 flex flex-col">
       <h4 className="text-sm font-bold text-blue-400 mb-2 flex items-center gap-2"><FileSpreadsheet size={16} /> Excel 匯入分析指令 (Data Prompt)</h4>
       <p className="text-xs text-slate-400 mb-2">這是匯入 Excel 檔案時，AI 用於清洗、整併與分類資料的指令。可調整門檻 (如 35%) 或分類規則。</p>
-      <textarea className="flex-1 w-full bg-slate-900 border border-slate-600 rounded p-3 text-xs text-slate-300 font-mono leading-relaxed outline-none focus:border-blue-500 resize-none" value={dataImportPrompt} onChange={(e) => setDataImportPrompt(e.target.value)} spellCheck="false"/>
+      <textarea className="flex-1 w-full bg-slate-900 border border-slate-600 rounded p-3 text-xs text-slate-300 font-mono leading-relaxed outline-none focus:border-blue-500 resize-none" value={dataImportPrompt} onChange={(e) => setDataImportPrompt(e.target.value)} spellCheck="false" />
     </div>
   </div>
 );
 
 const Section = ({ title, children }) => (<div className="border border-slate-600/50 rounded-lg p-3 bg-slate-800/50"><h4 className="text-sm font-bold text-blue-400 mb-3 pb-2 border-b border-slate-600/50 flex items-center justify-between">{title}</h4>{children}</div>);
-const InputGroup = ({ label, type = "text", value, onChange }) => (<div className="mb-2"><label className="text-xs text-slate-400 block mb-1">{label}</label><input type={type} className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1.5 text-sm text-white focus:border-blue-500 outline-none transition-colors" value={value} onChange={onChange}/></div>);
+const InputGroup = ({ label, type = "text", value, onChange }) => (<div className="mb-2"><label className="text-xs text-slate-400 block mb-1">{label}</label><input type={type} className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1.5 text-sm text-white focus:border-blue-500 outline-none transition-colors" value={value} onChange={onChange} /></div>);
 
 // --- Render ---
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);
