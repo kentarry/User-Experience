@@ -23,6 +23,7 @@ const App = () => {
   const [showApiKey, setShowApiKey] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
   const [apiStatus, setApiStatus] = useState('idle'); // idle | checking | valid | invalid
+  const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('ux_report_model') || 'gemini-2.5-flash');
 
   // Toast system
   const [toasts, setToasts] = useState([]);
@@ -58,22 +59,26 @@ const App = () => {
   const [isImporting, setIsImporting] = useState(false);
   const [dragOver, setDragOver] = useState(false);
 
-  // Persist API Key
+  // Persist API Key & Model
   useEffect(() => {
     if (apiKey) localStorage.setItem('ux_report_api_key', apiKey);
   }, [apiKey]);
+
+  useEffect(() => {
+    localStorage.setItem('ux_report_model', selectedModel);
+  }, [selectedModel]);
 
   // Validate API Key on change
   useEffect(() => {
     if (!apiKey || apiKey.length < 10) { setApiStatus('idle'); return; }
     setApiStatus('checking');
     const timer = setTimeout(async () => {
-      const result = await validateApiKey(apiKey);
+      const result = await validateApiKey(apiKey, selectedModel);
       setApiStatus(result.valid ? 'valid' : 'invalid');
       if (result.valid) addToast('API Key 驗證成功，已就緒', 'success', '連線成功');
     }, 800);
     return () => clearTimeout(timer);
-  }, [apiKey, addToast]);
+  }, [apiKey, selectedModel, addToast]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -195,7 +200,7 @@ const App = () => {
         generationConfig: { responseMimeType: "application/json" }
       };
 
-      const textResponse = await callGemini(payload, apiKey);
+      const textResponse = await callGemini(payload, apiKey, selectedModel);
       let analysisResult;
       try {
         analysisResult = parseAIJson(textResponse);
@@ -225,7 +230,7 @@ const App = () => {
     if (!apiKey) { showModal("請先在右側上方輸入 Gemini API Key，才能使用 Excel 匯入功能。", "API Key 缺失", true); return; }
     setIsImporting(true);
     try {
-      const importedData = await importExcelFile(file, dataImportPrompt, apiKey, data.aiAnalysis);
+      const importedData = await importExcelFile(file, dataImportPrompt, apiKey, data.aiAnalysis, selectedModel);
       syncState(importedData);
       setActiveTab('editor');
     } catch (error) {
@@ -595,6 +600,21 @@ const App = () => {
                   {showApiKey ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
               </div>
+            </div>
+            <div className="mt-3">
+              <label className="text-[10px] text-slate-300 font-bold block mb-1">
+                🤖 AI 模型選擇 (Model)
+              </label>
+              <select
+                className="w-full bg-slate-900 border border-slate-600 rounded px-2.5 py-1.5 text-xs text-white outline-none focus:border-blue-500 transition-colors cursor-pointer"
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+              >
+                <option value="gemini-2.5-flash">Gemini 2.5 Flash (預設)</option>
+                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                <option value="gemini-1.5-flash">Gemini 1.5 Flash (最穩定)</option>
+                <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+              </select>
             </div>
             {!apiKey && <p className="text-[10px] text-amber-400/80 mt-1.5">⚠️ 需要 API Key 才能使用 AI 分析和 Excel 匯入功能</p>}
             {apiStatus === 'valid' && <p className="text-[10px] text-emerald-400/80 mt-1.5">✅ API Key 已驗證，可正常使用</p>}

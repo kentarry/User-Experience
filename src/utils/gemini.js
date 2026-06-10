@@ -4,8 +4,8 @@
  * @param {string} apiKey - The Gemini API key.
  * @returns {string} - The text response from Gemini.
  */
-export async function callGemini(payload, apiKey) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+export async function callGemini(payload, apiKey, model = 'gemini-2.5-flash') {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
   const delays = [1000, 2000, 4000, 8000, 16000];
   let lastError = null;
 
@@ -71,13 +71,13 @@ export function parseAIJson(text) {
  * @param {string} apiKey - The Gemini API key to validate.
  * @returns {Promise<{valid: boolean, error?: string}>}
  */
-export async function validateApiKey(apiKey) {
+export async function validateApiKey(apiKey, model = 'gemini-2.5-flash') {
   if (!apiKey || apiKey.trim().length < 10) {
     return { valid: false, error: '金鑰格式不正確' };
   }
 
   try {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
     const payload = {
       contents: [{ parts: [{ text: "Hi" }] }],
       generationConfig: { maxOutputTokens: 5 }

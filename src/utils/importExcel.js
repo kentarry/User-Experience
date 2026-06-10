@@ -28,7 +28,7 @@ function cleanSuggestionText(text) {
  * @param {Array} existingAiAnalysis - Existing AI analysis items to preserve.
  * @returns {object} - The processed report data.
  */
-export async function importExcelFile(file, dataImportPrompt, apiKey, existingAiAnalysis) {
+export async function importExcelFile(file, dataImportPrompt, apiKey, existingAiAnalysis, model = 'gemini-2.5-flash') {
   const fileNameTitle = file.name.replace(/\.[^/.]+$/, "");
 
   return new Promise((resolve, reject) => {
@@ -115,7 +115,7 @@ export async function importExcelFile(file, dataImportPrompt, apiKey, existingAi
           generationConfig: { responseMimeType: "application/json" }
         };
 
-        const textResponse = await callGemini(payload, apiKey);
+        const textResponse = await callGemini(payload, apiKey, model);
         let importedData;
         try {
           importedData = parseAIJson(textResponse);
