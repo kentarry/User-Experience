@@ -13,7 +13,7 @@ import DashboardStats from './components/DashboardStats';
 import ProgressStepper from './components/ProgressStepper';
 import OnboardingGuide from './components/OnboardingGuide';
 import { initialData, DEFAULT_UX_EXPERT_PROMPT, DEFAULT_DATA_IMPORT_PROMPT } from './constants';
-import { callGemini, parseAIJson, validateApiKey } from './utils/gemini';
+import { callGemini, parseAIJson, validateApiKey, QuotaExhaustedError } from './utils/gemini';
 import { exportHtmlReport } from './utils/exportHtml';
 import { importExcelFile } from './utils/importExcel';
 import LZString from 'lz-string';
@@ -23,7 +23,16 @@ const App = () => {
   const [showApiKey, setShowApiKey] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
   const [apiStatus, setApiStatus] = useState('idle'); // idle | checking | valid | invalid
-  const [selectedModel, setSelectedModel] = useState(() => localStorage.getItem('ux_report_model') || 'gemini-2.5-flash');
+  const [selectedModel, setSelectedModel] = useState(() => {
+    const saved = localStorage.getItem('ux_report_model') || 'gemini-2.5-flash';
+    // Migrate deprecated models to default
+    const deprecated = ['gemini-1.5-flash', 'gemini-2.0-flash'];
+    if (deprecated.includes(saved)) {
+      localStorage.setItem('ux_report_model', 'gemini-2.5-flash');
+      return 'gemini-2.5-flash';
+    }
+    return saved;
+  });
 
   // Toast system
   const [toasts, setToasts] = useState([]);
@@ -68,15 +77,15 @@ const App = () => {
     localStorage.setItem('ux_report_model', selectedModel);
   }, [selectedModel]);
 
-  // Validate API Key on change
+  // Validate API Key on change (format-only, no API call to save quota)
   useEffect(() => {
     if (!apiKey || apiKey.length < 10) { setApiStatus('idle'); return; }
     setApiStatus('checking');
     const timer = setTimeout(async () => {
       const result = await validateApiKey(apiKey, selectedModel);
       setApiStatus(result.valid ? 'valid' : 'invalid');
-      if (result.valid) addToast('API Key 驗證成功，已就緒', 'success', '連線成功');
-    }, 800);
+      if (result.valid) addToast('API Key 格式驗證通過', 'success', '已就緒');
+    }, 300);
     return () => clearTimeout(timer);
   }, [apiKey, selectedModel, addToast]);
 
@@ -217,7 +226,11 @@ const App = () => {
         return newData;
       });
     } catch (error) {
-      showModal("AI 分析失敗：" + error.message, "錯誤", true);
+      if (error instanceof QuotaExhaustedError) {
+        showModal(error.message, "⚠️ API 配額不足", true);
+      } else {
+        showModal("AI 分析失敗：" + error.message, "錯誤", true);
+      }
     } finally {
       setAnalyzingIds(prev => ({ ...prev, [index]: false }));
     }
@@ -235,7 +248,11 @@ const App = () => {
       setActiveTab('editor');
     } catch (error) {
       console.error(error);
-      showModal("匯入失敗：" + error.message, "錯誤", true);
+      if (error instanceof QuotaExhaustedError) {
+        showModal(error.message, "⚠️ API 配額不足", true);
+      } else {
+        showModal("匯入失敗：" + error.message, "錯誤", true);
+      }
     } finally {
       setIsImporting(false);
     }
@@ -449,7 +466,40 @@ const App = () => {
   };
 
   // --- Issue editor (shared between critical & secondary) ---
-  const renderIssueEditor = (listName, item, idx) => (
+  // Helper to update a single suggestion within the suggestions array
+  const updateSuggestionItem = (listName, itemIdx, sugIdx, field, value) => {
+    const newData = JSON.parse(JSON.stringify(data));
+    const item = newData[listName][itemIdx];
+    if (Array.isArray(item.suggestions) && item.suggestions[sugIdx]) {
+      item.suggestions[sugIdx][field] = value;
+      // Keep legacy fields in sync with first suggestion
+      if (sugIdx === 0) {
+        if (field === 'suggestionId') item.suggestionId = value;
+        if (field === 'suggestion') item.suggestion = value;
+      }
+    }
+    syncState(newData);
+  };
+
+  // Helper to remove a suggestion from the suggestions array
+  const removeSuggestionItem = (listName, itemIdx, sugIdx) => {
+    const newData = JSON.parse(JSON.stringify(data));
+    const item = newData[listName][itemIdx];
+    if (Array.isArray(item.suggestions) && item.suggestions.length > 1) {
+      item.suggestions.splice(sugIdx, 1);
+      // Keep legacy fields in sync with first suggestion
+      item.suggestionId = item.suggestions[0].suggestionId;
+      item.suggestion = item.suggestions[0].suggestion;
+    }
+    syncState(newData);
+  };
+
+  const renderIssueEditor = (listName, item, idx) => {
+    const suggestions = Array.isArray(item.suggestions) && item.suggestions.length > 0
+      ? item.suggestions
+      : [{ suggestionId: item.suggestionId || '', suggestion: item.suggestion || '' }];
+
+    return (
     <div key={idx} className="mb-4 bg-slate-900/50 p-3 rounded border border-slate-700 relative group">
       <button onClick={() => removeItem(listName, idx)} className="absolute top-2 right-2 text-slate-600 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-opacity"><Trash2 size={14} /></button>
       <div className="flex gap-2 mb-2">
@@ -461,7 +511,47 @@ const App = () => {
         <label className="text-[10px] text-blue-300 block mb-1">相關人員 (陣列, 以逗號分隔)</label>
         <textarea className="w-full bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-blue-200" placeholder="UserA, UserB..." value={Array.isArray(item.relatedPersonnel) ? item.relatedPersonnel.join(', ') : ""} onChange={(e) => updateListItem(listName, idx, 'relatedPersonnel', e.target.value.split(',').map(s => s.trim()))} />
       </div>
-      <textarea className="w-full bg-slate-800 border border-slate-600/50 rounded p-2 text-xs text-purple-300 h-16 mb-2" placeholder="優化建議..." value={item.suggestion} onChange={(e) => updateListItem(listName, idx, 'suggestion', e.target.value)} />
+      {/* Suggestions editor - supports multiple suggestions per issue */}
+      <div className="mb-2 space-y-2">
+        <label className="text-[10px] text-purple-300 block">優化建議</label>
+        {suggestions.map((sug, sIdx) => (
+          <div key={sIdx} className="flex gap-2 items-start">
+            <input
+              className="w-16 bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-purple-400 font-mono flex-shrink-0"
+              placeholder="S01"
+              value={sug.suggestionId || ''}
+              onChange={(e) => {
+                if (Array.isArray(item.suggestions) && item.suggestions.length > 0) {
+                  updateSuggestionItem(listName, idx, sIdx, 'suggestionId', e.target.value);
+                } else {
+                  updateListItem(listName, idx, 'suggestionId', e.target.value);
+                }
+              }}
+            />
+            <textarea
+              className="flex-1 bg-slate-800 border border-slate-600/50 rounded p-2 text-xs text-purple-300 h-16"
+              placeholder="優化建議..."
+              value={sug.suggestion || ''}
+              onChange={(e) => {
+                if (Array.isArray(item.suggestions) && item.suggestions.length > 0) {
+                  updateSuggestionItem(listName, idx, sIdx, 'suggestion', e.target.value);
+                } else {
+                  updateListItem(listName, idx, 'suggestion', e.target.value);
+                }
+              }}
+            />
+            {suggestions.length > 1 && (
+              <button
+                onClick={() => removeSuggestionItem(listName, idx, sIdx)}
+                className="text-slate-600 hover:text-red-400 transition-colors flex-shrink-0 mt-1"
+                title="移除此建議"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
+        ))}
+      </div>
       <div className="bg-slate-800 border border-slate-700 rounded p-2">
         <div className="text-[10px] text-orange-400 mb-1 flex items-center gap-1 font-bold"><Trophy size={10} /> 最佳建議提供者</div>
         <div className="flex gap-2 mb-2">
@@ -471,7 +561,8 @@ const App = () => {
         <textarea className="w-full bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs text-slate-400 italic" placeholder="原始回饋內容 (Raw Content)..." value={item.bestSuggestionRawText || ""} onChange={(e) => updateListItem(listName, idx, 'bestSuggestionRawText', e.target.value)} />
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div className="flex h-screen w-full bg-slate-950 text-slate-100 font-sans overflow-hidden relative">
@@ -611,9 +702,7 @@ const App = () => {
                 onChange={(e) => setSelectedModel(e.target.value)}
               >
                 <option value="gemini-2.5-flash">Gemini 2.5 Flash (預設)</option>
-                <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
-                <option value="gemini-1.5-flash">Gemini 1.5 Flash (最穩定)</option>
-                <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+                <option value="gemini-3.5-flash">Gemini 3.5 Flash (最新)</option>
               </select>
             </div>
             {!apiKey && <p className="text-[10px] text-amber-400/80 mt-1.5">⚠️ 需要 API Key 才能使用 AI 分析和 Excel 匯入功能</p>}
